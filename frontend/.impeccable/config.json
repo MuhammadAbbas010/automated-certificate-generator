@@ -1,0 +1,26 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "side-tab",
+        "value": "*",
+        "files": [
+          "frontend/src/routes/wizard/TemplateStep.tsx"
+        ],
+        "createdAt": "2026-09-19T13:23:22.843Z",
+        "reason": "matches .warn-box left-accent style defined in user-approved mockup docs/mockups/desktop/chat-commands.html, reused per DESIGN.md warning-block convention"
+      },
+      {
+        "rule": "side-tab",
+        "value": "*",
+        "files": [
+          "frontend/src/routes/dashboard/ChatCommandsTab.tsx"
+        ],
+        "createdAt": "2026-09-19T13:23:30.106Z",
+        "reason": "this is the .warn-box style verbatim from user-approved mockup docs/mockups/desktop/chat-commands.html (line 44)"
+      }
+    ]
+  }
+}

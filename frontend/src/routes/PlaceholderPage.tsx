@@ -2,7 +2,7 @@ import { Sidebar } from "../components/Sidebar";
 
 export function PlaceholderPage({ title }: { title: string }) {
   return (
-    <div style={{ width: "100%", minHeight: "100vh", background: "var(--cream)", display: "flex" }}>
+    <div style={{ width: "100%", height: "100vh", background: "var(--cream)", display: "flex", overflow: "hidden" }}>
       <Sidebar />
       <div style={{ flexGrow: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
         <div style={{ textAlign: "center", color: "var(--ink-muted)" }}>

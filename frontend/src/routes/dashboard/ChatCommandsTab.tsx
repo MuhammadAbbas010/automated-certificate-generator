@@ -1,9 +1,19 @@
 import { useState } from "react";
 import { parseCommand, HELP_TEXT } from "../../lib/commandParser";
 import { SendIcon } from "../../components/icons";
-import type { DashboardState } from "./types";
+import type { Student } from "../../data/mockStudents";
+import type { LogEntry } from "../../data/certificate";
 
-export function ChatCommandsTab({ students, setStudents, nextSendAt, setNextSendAt, log, pushLog }: DashboardState) {
+interface ChatCommandsTabProps {
+  students: Student[];
+  updateStudents: (updater: (students: Student[]) => Student[]) => void;
+  nextSendAt: Date;
+  setNextSendAt: (date: Date) => void;
+  log: LogEntry[];
+  pushLog: (entry: Omit<LogEntry, "id" | "time">) => void;
+}
+
+export function ChatCommandsTab({ students, updateStudents, nextSendAt, setNextSendAt, log, pushLog }: ChatCommandsTabProps) {
   const [input, setInput] = useState("");
   const [awaitingConfirm, setAwaitingConfirm] = useState(false);
 
@@ -18,7 +28,7 @@ export function ChatCommandsTab({ students, setStudents, nextSendAt, setNextSend
     if (awaitingConfirm) {
       if (cmd.kind === "confirm") {
         const checkedPending = students.filter((s) => s.checked && s.status === "pending");
-        setStudents((prev) =>
+        updateStudents((prev) =>
           prev.map((s) => (s.checked && s.status === "pending" ? { ...s, status: "sent" as const, sentAt: new Date().toISOString() } : s))
         );
         pushLog({ actor: "system", kind: "text", text: `Sent ${checkedPending.length} certificate${checkedPending.length === 1 ? "" : "s"} immediately.` });
@@ -77,8 +87,8 @@ export function ChatCommandsTab({ students, setStudents, nextSendAt, setNextSend
   }
 
   return (
-    <>
-      <div style={{ flexGrow: 1, overflowY: "auto", padding: "8px 32px 12px" }}>
+    <div style={{ flexGrow: 1, minHeight: 0, display: "flex", flexDirection: "column" }}>
+      <div style={{ flexGrow: 1, minHeight: 0, overflowY: "auto", padding: "8px 32px 12px" }}>
         {log.map((entry) => (
           <div key={entry.id} style={{ display: "flex", gap: 16, padding: "15px 0", borderTop: "1px solid var(--hairline)" }}>
             <div style={{ width: 60, flexShrink: 0, fontSize: 12, color: "var(--ink-muted)", paddingTop: 1 }}>{entry.time}</div>
@@ -169,6 +179,6 @@ export function ChatCommandsTab({ students, setStudents, nextSendAt, setNextSend
           </button>
         </div>
       </div>
-    </>
+    </div>
   );
 }

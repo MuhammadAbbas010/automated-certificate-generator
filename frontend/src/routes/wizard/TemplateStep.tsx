@@ -1,4 +1,6 @@
+import { useState } from "react";
 import type { WizardDraft } from "../../data/wizardDraft";
+import { CertificatePreviewModal } from "../../components/CertificatePreviewModal";
 
 const FONTS = ["Source Serif 4", "Playfair Display", "EB Garamond", "Cormorant Garamond"];
 
@@ -9,6 +11,8 @@ export function TemplateStep({
   draft: WizardDraft;
   patch: (p: Partial<WizardDraft>) => void;
 }) {
+  const [showExample, setShowExample] = useState(false);
+
   return (
     <>
       <h1 style={{ fontSize: 27 }}>Certificate template</h1>
@@ -67,11 +71,22 @@ export function TemplateStep({
             !
           </span>
           <span>
-            Course name and date aren't auto-detected — add them directly to your Slides template before
-            generating copies.
+            Ensure course name and date are already on your Slides template before generating copies as the
+            system doesn't auto-detect them.{" "}
+            <button
+              type="button"
+              onClick={() => setShowExample(true)}
+              style={{ background: "none", border: "none", padding: 0, font: "inherit", color: "var(--accent)", fontWeight: 600, cursor: "pointer", textDecoration: "underline" }}
+            >
+              Refer to example →
+            </button>
           </span>
         </div>
       </div>
+
+      {showExample && (
+        <CertificatePreviewModal certificateName={draft.certificateName || "Example certificate"} onClose={() => setShowExample(false)} />
+      )}
 
       <div style={{ marginTop: 22 }}>
         <div style={{ fontSize: 13, fontWeight: 600, color: "var(--ink-soft)", marginBottom: 12 }}>

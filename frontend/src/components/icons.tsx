@@ -141,3 +141,17 @@ export const ClockIcon = ({ size = 13 }: IconProps) => (
     <path d="M12 7v5l3.5 2" />
   </svg>
 );
+
+export const WarningIcon = ({ size = 16 }: IconProps) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+    <path d="M10.3 3.6L1.8 18a1.5 1.5 0 001.3 2.3h17.8a1.5 1.5 0 001.3-2.3L13.7 3.6a1.5 1.5 0 00-2.6 0z" />
+    <path d="M12 9v4" />
+    <path d="M12 16.5v.01" />
+  </svg>
+);
+
+export const FolderIcon = ({ size = 14 }: IconProps) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+    <path d="M3 7a1 1 0 011-1h5l2 2h9a1 1 0 011 1v9a1 1 0 01-1 1H4a1 1 0 01-1-1V7z" />
+  </svg>
+);

@@ -1,8 +1,9 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { bucketStudents } from "../../lib/timeBuckets";
+import { exportStudentsCsv } from "../../lib/exportCsv";
 import type { Student } from "../../data/mockStudents";
-import { ChevronRight, EditIcon, TrashIcon, ExportIcon, CheckIcon, XIcon } from "../../components/icons";
-import type { DashboardState } from "./types";
+import { ChevronRight, EditIcon, TrashIcon, ExportIcon, CheckIcon, XIcon, WarningIcon } from "../../components/icons";
+import { CertificatePreviewModal } from "../../components/CertificatePreviewModal";
 
 const STATUS_COLOR: Record<Student["status"], string> = {
   pending: "var(--amber)",
@@ -10,43 +11,66 @@ const STATUS_COLOR: Record<Student["status"], string> = {
   sent: "var(--green)",
 };
 
+const MAX_CONCURRENT_EDITS = 2;
+
+interface ReviewListTabProps {
+  certId: string;
+  students: Student[];
+  certificateName: string;
+  searchQuery: string;
+  updateStudents: (updater: (students: Student[]) => Student[]) => void;
+}
+
+function matchesSearch(s: Student, query: string) {
+  if (!query.trim()) return true;
+  const q = query.trim().toLowerCase();
+  return s.name.toLowerCase().includes(q) || s.email.toLowerCase().includes(q) || s.columnValue.toLowerCase().includes(q);
+}
+
 function Row({
   student,
-  onToggle,
-  onEdit,
+  editing,
+  canOpenEdit,
+  draft,
+  registerRef,
+  onToggleCheck,
+  onRequestEdit,
+  onDraftChange,
+  onSaveEdit,
+  onCancelEdit,
   onRemove,
+  onPreview,
 }: {
   student: Student;
-  onToggle: () => void;
-  onEdit: (name: string, email: string) => void;
+  editing: boolean;
+  canOpenEdit: boolean;
+  draft?: { name: string; email: string };
+  registerRef: (el: HTMLDivElement | null) => void;
+  onToggleCheck: () => void;
+  onRequestEdit: () => void;
+  onDraftChange: (name: string, email: string) => void;
+  onSaveEdit: () => void;
+  onCancelEdit: () => void;
   onRemove: () => void;
+  onPreview: () => void;
 }) {
-  const [mode, setMode] = useState<"view" | "edit" | "confirm-delete">("view");
-  const [name, setName] = useState(student.name);
-  const [email, setEmail] = useState(student.email);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
 
-  if (mode === "edit") {
+  if (editing && draft) {
     return (
-      <div className="row" style={{ gridTemplateColumns: "28px 1fr 76px 150px 76px" }}>
-        <input type="checkbox" checked={student.checked} onChange={onToggle} aria-label={`Select ${student.name}`} />
+      <div ref={registerRef} data-row-id={student.id} className="row" style={{ gridTemplateColumns: "28px 1fr 76px 150px 76px" }}>
+        <input type="checkbox" checked={student.checked} onChange={onToggleCheck} aria-label={`Select ${student.name}`} />
         <div style={{ display: "flex", gap: 8 }}>
-          <input type="text" value={name} onChange={(e) => setName(e.target.value)} style={{ height: 32, fontSize: 13 }} />
-          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} style={{ height: 32, fontSize: 13 }} />
+          <input type="text" value={draft.name} onChange={(e) => onDraftChange(e.target.value, draft.email)} style={{ height: 32, fontSize: 13 }} />
+          <input type="email" value={draft.email} onChange={(e) => onDraftChange(draft.name, e.target.value)} style={{ height: 32, fontSize: 13 }} />
         </div>
         <div className="cert-thumb" style={{ opacity: 0.6 }} />
         <div style={{ fontSize: 13, color: "var(--ink-soft)" }}>{student.columnValue}</div>
         <div style={{ display: "flex", gap: 4, justifySelf: "end" }}>
-          <button
-            className="btn-icon"
-            aria-label="Save"
-            onClick={() => {
-              onEdit(name.trim() || student.name, email.trim() || student.email);
-              setMode("view");
-            }}
-          >
+          <button className="btn-icon" aria-label="Save" onClick={onSaveEdit}>
             <CheckIcon size={14} />
           </button>
-          <button className="btn-icon" aria-label="Cancel" onClick={() => setMode("view")}>
+          <button className="btn-icon" aria-label="Cancel" onClick={onCancelEdit}>
             <XIcon size={12} />
           </button>
         </div>
@@ -54,9 +78,9 @@ function Row({
     );
   }
 
-  if (mode === "confirm-delete") {
+  if (confirmingDelete) {
     return (
-      <div className="row" style={{ gridTemplateColumns: "28px 1fr 76px 150px 76px" }}>
+      <div ref={registerRef} data-row-id={student.id} className="row" style={{ gridTemplateColumns: "28px 1fr 76px 150px 76px" }}>
         <input type="checkbox" checked={student.checked} disabled aria-label={`Select ${student.name}`} />
         <div style={{ fontSize: 13.5, color: "var(--rust)" }}>Remove {student.name} from this certificate?</div>
         <div />
@@ -65,7 +89,7 @@ function Row({
           <button className="btn-icon" aria-label="Confirm remove" style={{ color: "var(--rust)" }} onClick={onRemove}>
             <CheckIcon size={14} />
           </button>
-          <button className="btn-icon" aria-label="Cancel" onClick={() => setMode("view")}>
+          <button className="btn-icon" aria-label="Cancel" onClick={() => setConfirmingDelete(false)}>
             <XIcon size={12} />
           </button>
         </div>
@@ -74,25 +98,20 @@ function Row({
   }
 
   return (
-    <div className="row" style={{ gridTemplateColumns: "28px 1fr 76px 150px 76px" }}>
-      <input type="checkbox" checked={student.checked} onChange={onToggle} aria-label={`Select ${student.name}`} />
+    <div ref={registerRef} data-row-id={student.id} className="row" style={{ gridTemplateColumns: "28px 1fr 76px 150px 76px" }}>
+      <input type="checkbox" checked={student.checked} onChange={onToggleCheck} aria-label={`Select ${student.name}`} />
       <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
         <span className="status-dot" style={{ background: STATUS_COLOR[student.status] }} />
         <div style={{ minWidth: 0 }}>
-          <div style={{ fontSize: 13.5, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-            {student.name}
-          </div>
-          <div style={{ fontSize: 12, color: "var(--ink-muted)" }}>
-            {student.email}
-            {student.sentAt ? ` · sent ${new Date(student.sentAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}` : ""}
-          </div>
+          <div style={{ fontSize: 13.5, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{student.name}</div>
+          <div style={{ fontSize: 12, color: "var(--ink-muted)" }}>{student.email}</div>
         </div>
       </div>
-      <div className="cert-thumb" style={{ opacity: student.status === "not_qualified" ? 0.5 : 1 }}>
+      <button className="cert-thumb" style={{ opacity: student.status === "not_qualified" ? 0.5 : 1, cursor: "pointer" }} onClick={onPreview} aria-label={`Preview certificate for ${student.name}`}>
         {student.status !== "not_qualified" && <span className="seal" />}
         <div className="ln" style={{ width: 30 }} />
         <div className="ln" style={{ width: 18, opacity: 0.6 }} />
-      </div>
+      </button>
       <div
         style={{
           fontSize: 13,
@@ -103,10 +122,17 @@ function Row({
         {student.columnValue}
       </div>
       <div style={{ display: "flex", gap: 4, justifySelf: "end" }}>
-        <button className="btn-icon" aria-label="Edit" onClick={() => setMode("edit")}>
+        <button
+          className="btn-icon"
+          aria-label="Edit"
+          onClick={onRequestEdit}
+          disabled={!canOpenEdit}
+          style={!canOpenEdit ? { opacity: 0.35, cursor: "not-allowed" } : undefined}
+          title={canOpenEdit ? undefined : `Only ${MAX_CONCURRENT_EDITS} records can be edited at once`}
+        >
           <EditIcon size={14} />
         </button>
-        <button className="btn-icon" aria-label="Delete" onClick={() => setMode("confirm-delete")}>
+        <button className="btn-icon" aria-label="Delete" onClick={() => setConfirmingDelete(true)}>
           <TrashIcon size={14} />
         </button>
       </div>
@@ -114,35 +140,111 @@ function Row({
   );
 }
 
-export function ReviewListTab({ students, setStudents }: DashboardState) {
+export function ReviewListTab({ students, certificateName, searchQuery, updateStudents }: ReviewListTabProps) {
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
-  const buckets = useMemo(() => bucketStudents(students), [students]);
+  const [openEdits, setOpenEdits] = useState<string[]>([]);
+  const [drafts, setDrafts] = useState<Record<string, { name: string; email: string }>>({});
+  const [offscreenWarnings, setOffscreenWarnings] = useState<string[]>([]);
+  const [previewStudent, setPreviewStudent] = useState<Student | null>(null);
 
-  const selectedCount = students.filter((s) => s.checked).length;
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const rowRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+  const draftsRef = useRef(drafts);
+  useEffect(() => {
+    draftsRef.current = drafts;
+  }, [drafts]);
+
+  const filtered = useMemo(() => students.filter((s) => s.status !== "sent" && matchesSearch(s, searchQuery)), [students, searchQuery]);
+  const buckets = useMemo(() => bucketStudents(filtered), [filtered]);
+  const selectedCount = filtered.filter((s) => s.checked).length;
+  const unsentTotal = students.filter((s) => s.status !== "sent").length;
+
+  // Track scroll-visibility of any row currently open for edit. A dirty row that scrolls
+  // out of view gets a warning near the scrollbar instead of being silently discarded or
+  // yanking the user's scroll position back (per product decision: never force-scroll).
+  useEffect(() => {
+    if (openEdits.length === 0 || !scrollRef.current) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          const id = entry.target.getAttribute("data-row-id");
+          if (!id) continue;
+          if (entry.isIntersecting) {
+            setOffscreenWarnings((prev) => prev.filter((x) => x !== id));
+          } else if (draftsRef.current[id]) {
+            const student = students.find((s) => s.id === id);
+            const draft = draftsRef.current[id];
+            const dirty = student && (draft.name !== student.name || draft.email !== student.email);
+            if (dirty) {
+              setOffscreenWarnings((prev) => (prev.includes(id) ? prev : [...prev, id]));
+            } else {
+              setOpenEdits((prev) => prev.filter((x) => x !== id));
+              setDrafts((prev) => {
+                const next = { ...prev };
+                delete next[id];
+                return next;
+              });
+            }
+          }
+        }
+      },
+      { root: scrollRef.current, threshold: 0 }
+    );
+    for (const id of openEdits) {
+      const el = rowRefs.current.get(id);
+      if (el) observer.observe(el);
+    }
+    return () => observer.disconnect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openEdits, students]);
 
   function toggle(id: string) {
-    setStudents((prev) => prev.map((s) => (s.id === id ? { ...s, checked: !s.checked } : s)));
+    updateStudents((prev) => prev.map((s) => (s.id === id ? { ...s, checked: !s.checked } : s)));
   }
 
-  function edit(id: string, name: string, email: string) {
-    setStudents((prev) => prev.map((s) => (s.id === id ? { ...s, name, email } : s)));
+  function requestEdit(student: Student) {
+    if (openEdits.includes(student.id) || openEdits.length >= MAX_CONCURRENT_EDITS) return;
+    setOpenEdits((prev) => [...prev, student.id]);
+    setDrafts((prev) => ({ ...prev, [student.id]: { name: student.name, email: student.email } }));
+  }
+
+  function cancelEdit(id: string) {
+    setOpenEdits((prev) => prev.filter((x) => x !== id));
+    setOffscreenWarnings((prev) => prev.filter((x) => x !== id));
+    setDrafts((prev) => {
+      const next = { ...prev };
+      delete next[id];
+      return next;
+    });
+  }
+
+  function saveEdit(id: string) {
+    const draft = drafts[id];
+    if (draft) {
+      updateStudents((prev) => prev.map((s) => (s.id === id ? { ...s, name: draft.name.trim() || s.name, email: draft.email.trim() || s.email } : s)));
+    }
+    cancelEdit(id);
   }
 
   function remove(id: string) {
-    setStudents((prev) => prev.filter((s) => s.id !== id));
+    updateStudents((prev) => prev.filter((s) => s.id !== id));
+    cancelEdit(id);
   }
 
   function approveAll() {
-    setStudents((prev) =>
-      prev.map((s) =>
-        s.checked && s.status === "pending" ? { ...s, status: "sent" as const, sentAt: new Date().toISOString() } : s
-      )
+    updateStudents((prev) =>
+      prev.map((s) => (s.checked && s.status === "pending" ? { ...s, status: "sent" as const, sentAt: new Date().toISOString() } : s))
     );
   }
 
+  function handleExport() {
+    const toExport = selectedCount > 0 ? filtered.filter((s) => s.checked) : filtered;
+    exportStudentsCsv(toExport, certificateName);
+  }
+
   return (
-    <>
-      <div style={{ flexGrow: 1, overflowY: "auto", padding: "22px 32px 12px" }}>
+    <div style={{ position: "relative", flexGrow: 1, minHeight: 0, display: "flex", flexDirection: "column" }}>
+      <div ref={scrollRef} style={{ flexGrow: 1, minHeight: 0, overflowY: "auto", padding: "22px 32px 12px" }}>
         {buckets.map((bucket) => {
           const isExpanded = expanded[bucket.key] ?? bucket.defaultExpanded;
           return (
@@ -162,9 +264,20 @@ export function ReviewListTab({ students, setStudents }: DashboardState) {
                       <Row
                         key={s.id}
                         student={s}
-                        onToggle={() => toggle(s.id)}
-                        onEdit={(name, email) => edit(s.id, name, email)}
+                        editing={openEdits.includes(s.id)}
+                        canOpenEdit={openEdits.includes(s.id) || openEdits.length < MAX_CONCURRENT_EDITS}
+                        draft={drafts[s.id]}
+                        registerRef={(el) => {
+                          if (el) rowRefs.current.set(s.id, el);
+                          else rowRefs.current.delete(s.id);
+                        }}
+                        onToggleCheck={() => toggle(s.id)}
+                        onRequestEdit={() => requestEdit(s)}
+                        onDraftChange={(name, email) => setDrafts((prev) => ({ ...prev, [s.id]: { name, email } }))}
+                        onSaveEdit={() => saveEdit(s.id)}
+                        onCancelEdit={() => cancelEdit(s.id)}
                         onRemove={() => remove(s.id)}
+                        onPreview={() => setPreviewStudent(s)}
                       />
                     ))}
                   </div>
@@ -172,17 +285,7 @@ export function ReviewListTab({ students, setStudents }: DashboardState) {
               ) : (
                 <button
                   className="collapsed-row"
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 10,
-                    height: 48,
-                    padding: "0 18px",
-                    background: "var(--cream-deep)",
-                    borderRadius: 6,
-                    border: "none",
-                    width: "100%",
-                  }}
+                  style={{ display: "flex", alignItems: "center", gap: 10, height: 48, padding: "0 18px", background: "var(--cream-deep)", borderRadius: 6, border: "none", width: "100%" }}
                   onClick={() => setExpanded((e) => ({ ...e, [bucket.key]: true }))}
                 >
                   <ChevronRight size={12} />
@@ -195,10 +298,40 @@ export function ReviewListTab({ students, setStudents }: DashboardState) {
         })}
         {buckets.length === 0 && (
           <div style={{ fontSize: 13.5, color: "var(--ink-muted)", padding: "40px 0", textAlign: "center" }}>
-            No submissions yet.
+            {searchQuery ? "No submissions match your search." : "No submissions yet."}
           </div>
         )}
       </div>
+
+      {offscreenWarnings.length > 0 && (
+        <div style={{ position: "absolute", top: 16, right: 10, display: "flex", flexDirection: "column", gap: 8, zIndex: 20, maxWidth: 220 }}>
+          {offscreenWarnings.map((id) => {
+            const student = students.find((s) => s.id === id);
+            return (
+              <div
+                key={id}
+                style={{
+                  display: "flex",
+                  gap: 8,
+                  alignItems: "flex-start",
+                  background: "var(--rust-soft)",
+                  border: "1px solid var(--rust)",
+                  borderRadius: 6,
+                  padding: "10px 12px",
+                  boxShadow: "var(--shadow-1)",
+                }}
+              >
+                <span style={{ color: "var(--rust)", flexShrink: 0, marginTop: 1 }}>
+                  <WarningIcon size={14} />
+                </span>
+                <span style={{ fontSize: 12, color: "var(--rust)", lineHeight: 1.4 }}>
+                  Unsaved edit open{student ? ` for ${student.name}` : ""} — scroll back to save or cancel it.
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       <div
         style={{
@@ -213,10 +346,10 @@ export function ReviewListTab({ students, setStudents }: DashboardState) {
         }}
       >
         <span style={{ fontSize: 13, color: "var(--ink-muted)" }}>
-          {selectedCount} selected · {students.length} total
+          {selectedCount} selected · {filtered.length} shown{filtered.length !== unsentTotal ? ` of ${unsentTotal}` : ""}
         </span>
         <div style={{ display: "flex", gap: 10 }}>
-          <button className="btn-ghost-sm">
+          <button className="btn-ghost-sm" onClick={handleExport}>
             <ExportIcon size={14} />
             Export
           </button>
@@ -225,6 +358,10 @@ export function ReviewListTab({ students, setStudents }: DashboardState) {
           </button>
         </div>
       </div>
-    </>
+
+      {previewStudent && (
+        <CertificatePreviewModal studentName={previewStudent.name} certificateName={certificateName} onClose={() => setPreviewStudent(null)} />
+      )}
+    </div>
   );
 }

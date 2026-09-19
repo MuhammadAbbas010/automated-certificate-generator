@@ -18,7 +18,9 @@ export function bucketStudents(students: Student[]): Bucket[] {
   const yesterday: Student[] = [];
   const lastWeek: Student[] = [];
 
+  // Sent certificates live in their own tab (see SentTab) — keep them out of the aging buckets.
   for (const s of students) {
+    if (s.status === "sent") continue;
     const ageMs = now - new Date(s.arrivedAt).getTime();
     if (ageMs < HOUR) justArrived.push(s);
     else if (ageMs < 6 * HOUR) last6h.push(s);
