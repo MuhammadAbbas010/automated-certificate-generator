@@ -3,6 +3,7 @@ import { parseCommand, HELP_TEXT } from "../../lib/commandParser";
 import { SendIcon } from "../../components/icons";
 import type { Student } from "../../data/mockStudents";
 import type { LogEntry } from "../../data/certificate";
+import { useIsMobile } from "../../lib/useIsMobile";
 
 interface ChatCommandsTabProps {
   students: Student[];
@@ -14,6 +15,7 @@ interface ChatCommandsTabProps {
 }
 
 export function ChatCommandsTab({ students, updateStudents, nextSendAt, setNextSendAt, log, pushLog }: ChatCommandsTabProps) {
+  const isMobile = useIsMobile();
   const [input, setInput] = useState("");
   const [awaitingConfirm, setAwaitingConfirm] = useState(false);
 
@@ -88,10 +90,10 @@ export function ChatCommandsTab({ students, updateStudents, nextSendAt, setNextS
 
   return (
     <div style={{ flexGrow: 1, minHeight: 0, display: "flex", flexDirection: "column" }}>
-      <div style={{ flexGrow: 1, minHeight: 0, overflowY: "auto", padding: "8px 32px 12px" }}>
+      <div style={{ flexGrow: 1, minHeight: 0, overflowY: "auto", padding: isMobile ? "8px 14px 12px" : "8px 32px 12px" }}>
         {log.map((entry) => (
-          <div key={entry.id} style={{ display: "flex", gap: 16, padding: "15px 0", borderTop: "1px solid var(--hairline)" }}>
-            <div style={{ width: 60, flexShrink: 0, fontSize: 12, color: "var(--ink-muted)", paddingTop: 1 }}>{entry.time}</div>
+          <div key={entry.id} style={{ display: "flex", gap: isMobile ? 10 : 16, padding: "15px 0", borderTop: "1px solid var(--hairline)" }}>
+            <div style={{ width: isMobile ? 48 : 60, flexShrink: 0, fontSize: isMobile ? 11 : 12, color: "var(--ink-muted)", paddingTop: 1 }}>{entry.time}</div>
             <div style={{ flexGrow: 1 }}>
               <span
                 style={{
@@ -132,8 +134,8 @@ export function ChatCommandsTab({ students, updateStudents, nextSendAt, setNextS
         ))}
       </div>
 
-      <div style={{ flexShrink: 0, borderTop: "1px solid var(--hairline)", background: "var(--paper)", padding: "14px 32px 20px" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+      <div style={{ flexShrink: 0, borderTop: "1px solid var(--hairline)", background: "var(--paper)", padding: isMobile ? "12px 14px 16px" : "14px 32px 20px" }}>
+        <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8, marginBottom: 12 }}>
           <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--ink-muted)", marginRight: 4 }}>
             Commands
           </span>

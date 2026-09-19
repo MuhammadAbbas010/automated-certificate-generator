@@ -1,28 +1,40 @@
+import { useIsMobile } from "../lib/useIsMobile";
+
 const STEPS = ["Template", "Data Source", "Qualification", "Email", "Schedule"];
 const MIN_START = 0.12; // "endowed progress" — never start the bar at 0%, see docs/mockups/DESIGN.md
 
 export function WizardProgress({ currentStep }: { currentStep: number }) {
+  const isMobile = useIsMobile();
   const progress = MIN_START + (currentStep / (STEPS.length - 1)) * (1 - MIN_START);
 
   return (
-    <div style={{ padding: "28px 40px 24px", borderBottom: "1px solid var(--hairline)" }}>
+    <div style={{ padding: isMobile ? "18px 20px 20px" : "28px 40px 24px", borderBottom: "1px solid var(--hairline)" }}>
       <div style={{ width: 920, margin: "0 auto", maxWidth: "100%" }}>
-        <div style={{ display: "grid", gridTemplateColumns: `repeat(${STEPS.length}, 1fr)`, marginBottom: 10 }}>
-          {STEPS.map((label, i) => (
-            <div
-              key={label}
-              className="step-label"
-              style={{
-                fontSize: 12,
-                fontWeight: 600,
-                textAlign: "center",
-                color: i === currentStep ? "var(--ink)" : "var(--ink-muted)",
-              }}
-            >
-              {label}
-            </div>
-          ))}
-        </div>
+        {isMobile ? (
+          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 10, fontSize: 12.5 }}>
+            <span style={{ fontWeight: 600, color: "var(--ink)" }}>{STEPS[currentStep]}</span>
+            <span style={{ color: "var(--ink-muted)" }}>
+              Step {currentStep + 1} of {STEPS.length}
+            </span>
+          </div>
+        ) : (
+          <div style={{ display: "grid", gridTemplateColumns: `repeat(${STEPS.length}, 1fr)`, marginBottom: 10 }}>
+            {STEPS.map((label, i) => (
+              <div
+                key={label}
+                className="step-label"
+                style={{
+                  fontSize: 12,
+                  fontWeight: 600,
+                  textAlign: "center",
+                  color: i === currentStep ? "var(--ink)" : "var(--ink-muted)",
+                }}
+              >
+                {label}
+              </div>
+            ))}
+          </div>
+        )}
         <div style={{ position: "relative", height: 4, background: "var(--hairline-strong)", borderRadius: 2 }}>
           <div
             style={{

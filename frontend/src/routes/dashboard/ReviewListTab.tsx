@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { bucketStudents } from "../../lib/timeBuckets";
 import { exportStudentsCsv } from "../../lib/exportCsv";
+import { useIsMobile } from "../../lib/useIsMobile";
 import type { Student } from "../../data/mockStudents";
-import { ChevronRight, EditIcon, TrashIcon, ExportIcon, CheckIcon, XIcon, WarningIcon } from "../../components/icons";
+import { ChevronRight, EditIcon, TrashIcon, ExportIcon, CheckIcon, XIcon, WarningIcon, MoreIcon } from "../../components/icons";
 import { CertificatePreviewModal } from "../../components/CertificatePreviewModal";
+import { ContextMenu } from "../../components/ContextMenu";
 
 const STATUS_COLOR: Record<Student["status"], string> = {
   pending: "var(--amber)",
@@ -54,9 +56,38 @@ function Row({
   onRemove: () => void;
   onPreview: () => void;
 }) {
+  const isMobile = useIsMobile();
   const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [menuAnchor, setMenuAnchor] = useState<{ x: number; y: number } | null>(null);
+
+  const thumb = (
+    <button className="cert-thumb" style={{ opacity: student.status === "not_qualified" ? 0.5 : 1, cursor: "pointer" }} onClick={onPreview} aria-label={`Preview certificate for ${student.name}`}>
+      {student.status !== "not_qualified" && <span className="seal" />}
+      <div className="ln" style={{ width: isMobile ? 20 : 30 }} />
+      <div className="ln" style={{ width: isMobile ? 12 : 18, opacity: 0.6 }} />
+    </button>
+  );
 
   if (editing && draft) {
+    if (isMobile) {
+      return (
+        <div ref={registerRef} data-row-id={student.id} className="row-card">
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <input type="checkbox" checked={student.checked} onChange={onToggleCheck} aria-label={`Select ${student.name}`} />
+            <input type="text" value={draft.name} onChange={(e) => onDraftChange(e.target.value, draft.email)} style={{ height: 34, fontSize: 13, flexGrow: 1 }} />
+          </div>
+          <input type="email" value={draft.email} onChange={(e) => onDraftChange(draft.name, e.target.value)} style={{ height: 34, fontSize: 13, marginLeft: 27, width: "calc(100% - 27px)" }} />
+          <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+            <button className="btn-ghost-sm" style={{ height: 32, padding: "0 12px" }} onClick={onCancelEdit}>
+              Cancel
+            </button>
+            <button className="btn-primary" style={{ height: 32, padding: "0 12px" }} onClick={onSaveEdit}>
+              Save
+            </button>
+          </div>
+        </div>
+      );
+    }
     return (
       <div ref={registerRef} data-row-id={student.id} className="row" style={{ gridTemplateColumns: "28px 1fr 76px 150px 76px" }}>
         <input type="checkbox" checked={student.checked} onChange={onToggleCheck} aria-label={`Select ${student.name}`} />
@@ -79,6 +110,21 @@ function Row({
   }
 
   if (confirmingDelete) {
+    if (isMobile) {
+      return (
+        <div ref={registerRef} data-row-id={student.id} className="row-card">
+          <div style={{ fontSize: 13.5, color: "var(--rust)" }}>Remove {student.name} from this certificate?</div>
+          <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+            <button className="btn-ghost-sm" style={{ height: 32, padding: "0 12px" }} onClick={() => setConfirmingDelete(false)}>
+              Cancel
+            </button>
+            <button className="btn-primary" style={{ height: 32, padding: "0 12px", background: "var(--rust)", borderColor: "var(--rust)" }} onClick={onRemove}>
+              Remove
+            </button>
+          </div>
+        </div>
+      );
+    }
     return (
       <div ref={registerRef} data-row-id={student.id} className="row" style={{ gridTemplateColumns: "28px 1fr 76px 150px 76px" }}>
         <input type="checkbox" checked={student.checked} disabled aria-label={`Select ${student.name}`} />
@@ -97,6 +143,53 @@ function Row({
     );
   }
 
+  if (isMobile) {
+    return (
+      <div ref={registerRef} data-row-id={student.id} className="row-card">
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <input type="checkbox" checked={student.checked} onChange={onToggleCheck} aria-label={`Select ${student.name}`} />
+          <span className="status-dot" style={{ background: STATUS_COLOR[student.status] }} />
+          <span style={{ fontSize: 13.5, fontWeight: 600, flexGrow: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{student.name}</span>
+          <button
+            className="btn-icon"
+            style={{ width: 28, height: 28 }}
+            aria-label="More actions"
+            onClick={(e) => setMenuAnchor({ x: e.clientX, y: e.clientY })}
+          >
+            <MoreIcon size={14} />
+          </button>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingLeft: 27 }}>
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontSize: 12, color: "var(--ink-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{student.email}</div>
+            <div style={{ fontSize: 12, color: student.status === "not_qualified" ? "var(--rust)" : "var(--ink-soft)", fontWeight: student.status === "not_qualified" ? 600 : 400, marginTop: 2 }}>
+              {student.columnValue}
+            </div>
+          </div>
+          {thumb}
+        </div>
+
+        {menuAnchor && (
+          <ContextMenu
+            x={menuAnchor.x}
+            y={menuAnchor.y}
+            onClose={() => setMenuAnchor(null)}
+            items={[
+              {
+                label: "Edit",
+                icon: <EditIcon size={13} />,
+                disabled: !canOpenEdit,
+                title: canOpenEdit ? undefined : `Only ${MAX_CONCURRENT_EDITS} records can be edited at once`,
+                onClick: onRequestEdit,
+              },
+              { label: "Delete", icon: <TrashIcon size={13} />, danger: true, onClick: () => setConfirmingDelete(true) },
+            ]}
+          />
+        )}
+      </div>
+    );
+  }
+
   return (
     <div ref={registerRef} data-row-id={student.id} className="row" style={{ gridTemplateColumns: "28px 1fr 76px 150px 76px" }}>
       <input type="checkbox" checked={student.checked} onChange={onToggleCheck} aria-label={`Select ${student.name}`} />
@@ -107,11 +200,7 @@ function Row({
           <div style={{ fontSize: 12, color: "var(--ink-muted)" }}>{student.email}</div>
         </div>
       </div>
-      <button className="cert-thumb" style={{ opacity: student.status === "not_qualified" ? 0.5 : 1, cursor: "pointer" }} onClick={onPreview} aria-label={`Preview certificate for ${student.name}`}>
-        {student.status !== "not_qualified" && <span className="seal" />}
-        <div className="ln" style={{ width: 30 }} />
-        <div className="ln" style={{ width: 18, opacity: 0.6 }} />
-      </button>
+      {thumb}
       <div
         style={{
           fontSize: 13,
@@ -141,6 +230,7 @@ function Row({
 }
 
 export function ReviewListTab({ students, certificateName, searchQuery, updateStudents }: ReviewListTabProps) {
+  const isMobile = useIsMobile();
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [openEdits, setOpenEdits] = useState<string[]>([]);
   const [drafts, setDrafts] = useState<Record<string, { name: string; email: string }>>({});
@@ -242,9 +332,12 @@ export function ReviewListTab({ students, certificateName, searchQuery, updateSt
     exportStudentsCsv(toExport, certificateName);
   }
 
+  const listPad = isMobile ? "14px 14px 12px" : "22px 32px 12px";
+  const footerPad = isMobile ? "0 14px" : "0 32px";
+
   return (
     <div style={{ position: "relative", flexGrow: 1, minHeight: 0, display: "flex", flexDirection: "column" }}>
-      <div ref={scrollRef} style={{ flexGrow: 1, minHeight: 0, overflowY: "auto", padding: "22px 32px 12px" }}>
+      <div ref={scrollRef} style={{ flexGrow: 1, minHeight: 0, overflowY: "auto", padding: listPad }}>
         {buckets.map((bucket) => {
           const isExpanded = expanded[bucket.key] ?? bucket.defaultExpanded;
           return (
@@ -259,7 +352,7 @@ export function ReviewListTab({ students, certificateName, searchQuery, updateSt
                     <span style={{ fontSize: 12, color: "var(--ink-muted)" }}>{bucket.students.length}</span>
                     <div style={{ flexGrow: 1, height: 1, background: "var(--hairline)" }} />
                   </div>
-                  <div style={{ border: "1px solid var(--hairline)", borderRadius: 6, background: "var(--paper)", marginBottom: 16 }}>
+                  <div style={{ border: "1px solid var(--hairline)", borderRadius: 6, background: "var(--paper)", marginBottom: 16, padding: isMobile ? "0 12px" : 0 }}>
                     {bucket.students.map((s) => (
                       <Row
                         key={s.id}
@@ -304,7 +397,7 @@ export function ReviewListTab({ students, certificateName, searchQuery, updateSt
       </div>
 
       {offscreenWarnings.length > 0 && (
-        <div style={{ position: "absolute", top: 16, right: 10, display: "flex", flexDirection: "column", gap: 8, zIndex: 20, maxWidth: 220 }}>
+        <div style={{ position: "absolute", top: 16, right: isMobile ? 6 : 10, display: "flex", flexDirection: "column", gap: 8, zIndex: 20, maxWidth: isMobile ? 170 : 220 }}>
           {offscreenWarnings.map((id) => {
             const student = students.find((s) => s.id === id);
             return (
@@ -342,16 +435,17 @@ export function ReviewListTab({ students, certificateName, searchQuery, updateSt
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          padding: "0 32px",
+          padding: footerPad,
+          gap: 10,
         }}
       >
-        <span style={{ fontSize: 13, color: "var(--ink-muted)" }}>
+        <span style={{ fontSize: 13, color: "var(--ink-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
           {selectedCount} selected · {filtered.length} shown{filtered.length !== unsentTotal ? ` of ${unsentTotal}` : ""}
         </span>
-        <div style={{ display: "flex", gap: 10 }}>
-          <button className="btn-ghost-sm" onClick={handleExport}>
+        <div style={{ display: "flex", gap: 10, flexShrink: 0 }}>
+          <button className="btn-ghost-sm" onClick={handleExport} aria-label="Export" title="Export">
             <ExportIcon size={14} />
-            Export
+            {!isMobile && "Export"}
           </button>
           <button className="btn-primary" onClick={approveAll} disabled={selectedCount === 0}>
             Approve All

@@ -5,6 +5,8 @@ export interface ContextMenuItem {
   label: string;
   icon: ReactNode;
   danger?: boolean;
+  disabled?: boolean;
+  title?: string;
   onClick: () => void;
 }
 
@@ -24,13 +26,18 @@ export function ContextMenu({ x, y, items, onClose }: { x: number; y: number; it
     };
   }, [onClose]);
 
+  const menuWidth = 180;
+  const menuHeight = items.length * 38 + 8;
+  const left = Math.min(Math.max(8, x), window.innerWidth - menuWidth - 8);
+  const top = Math.min(Math.max(8, y), window.innerHeight - menuHeight - 8);
+
   return createPortal(
     <div
       onClick={(e) => e.stopPropagation()}
       style={{
         position: "fixed",
-        top: y,
-        left: x,
+        top,
+        left,
         background: "var(--paper)",
         border: "1px solid var(--hairline-strong)",
         borderRadius: 6,
@@ -45,9 +52,12 @@ export function ContextMenu({ x, y, items, onClose }: { x: number; y: number; it
         <button
           key={item.label}
           onClick={() => {
+            if (item.disabled) return;
             item.onClick();
             onClose();
           }}
+          disabled={item.disabled}
+          title={item.title}
           style={{
             display: "flex",
             alignItems: "center",
@@ -59,10 +69,12 @@ export function ContextMenu({ x, y, items, onClose }: { x: number; y: number; it
             textAlign: "left",
             background: "none",
             border: "none",
-            color: item.danger ? "var(--rust)" : "var(--ink)",
-            cursor: "pointer",
+            color: item.disabled ? "var(--ink-muted)" : item.danger ? "var(--rust)" : "var(--ink)",
+            opacity: item.disabled ? 0.55 : 1,
+            cursor: item.disabled ? "not-allowed" : "pointer",
           }}
           onMouseEnter={(e) => {
+            if (item.disabled) return;
             e.currentTarget.style.background = item.danger ? "var(--rust-soft)" : "var(--cream-deep)";
           }}
           onMouseLeave={(e) => {

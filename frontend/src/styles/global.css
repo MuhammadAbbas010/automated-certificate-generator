@@ -405,6 +405,17 @@ input[type="checkbox"] {
   background: rgba(33, 29, 20, 0.02);
 }
 
+.row-card {
+  padding: 12px 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  border-top: 1px solid var(--hairline);
+}
+.row-card:first-child {
+  border-top: none;
+}
+
 .collapsed-row {
   display: flex;
   align-items: center;

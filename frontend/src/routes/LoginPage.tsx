@@ -2,10 +2,12 @@ import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { AVATAR_GRADIENTS } from "../data/avatars";
 import { useAuth } from "../context/AuthContext";
+import { useIsMobile } from "../lib/useIsMobile";
 
 export function LoginPage() {
   const navigate = useNavigate();
   const { signIn } = useAuth();
+  const isMobile = useIsMobile();
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [avatarIndex, setAvatarIndex] = useState(1);
@@ -22,6 +24,9 @@ export function LoginPage() {
     navigate("/dashboard");
   }
 
+  const avatarSize = isMobile ? 36 : 40;
+  const avatarGap = isMobile ? 9 : 12;
+
   return (
     <div
       style={{
@@ -32,9 +37,10 @@ export function LoginPage() {
         alignItems: "center",
         justifyContent: "center",
         position: "relative",
+        padding: isMobile ? "72px 16px 56px" : 0,
       }}
     >
-      <div style={{ position: "absolute", top: 32, left: 40, display: "flex", alignItems: "center", gap: 10 }}>
+      <div style={{ position: "absolute", top: isMobile ? 20 : 32, left: isMobile ? 16 : 40, display: "flex", alignItems: "center", gap: 10 }}>
         <div
           style={{
             width: 26,
@@ -53,12 +59,12 @@ export function LoginPage() {
 
       <div
         style={{
-          width: 440,
+          width: "min(440px, 100%)",
           background: "var(--paper)",
           border: "1px solid var(--hairline)",
           borderRadius: 10,
           boxShadow: "var(--shadow-2)",
-          padding: "44px 40px 36px",
+          padding: isMobile ? "36px 24px 28px" : "44px 40px 36px",
         }}
       >
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, marginBottom: 28 }}>
@@ -114,7 +120,7 @@ export function LoginPage() {
 
           <div>
             <label className="field-label">Choose an avatar</label>
-            <div style={{ display: "flex", gap: 12, paddingTop: 2 }}>
+            <div style={{ display: "flex", gap: avatarGap, paddingTop: 2 }}>
               {AVATAR_GRADIENTS.map((gradient, i) => (
                 <button
                   type="button"
@@ -123,8 +129,9 @@ export function LoginPage() {
                   aria-pressed={avatarIndex === i}
                   onClick={() => setAvatarIndex(i)}
                   style={{
-                    width: 40,
-                    height: 40,
+                    width: avatarSize,
+                    height: avatarSize,
+                    flexShrink: 0,
                     borderRadius: "50%",
                     border: `2px solid ${avatarIndex === i ? "var(--accent)" : "transparent"}`,
                     background: gradient,
@@ -159,7 +166,7 @@ export function LoginPage() {
         </div>
       </div>
 
-      <div style={{ position: "absolute", bottom: 28, fontSize: 12, color: "var(--ink-muted)" }}>
+      <div style={{ position: "absolute", bottom: isMobile ? 16 : 28, left: 16, right: 16, textAlign: "center", fontSize: 12, color: "var(--ink-muted)" }}>
         Lincoln High School · Certificate Desk
       </div>
     </div>
