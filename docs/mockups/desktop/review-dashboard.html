@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Review Dashboard</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@500;600;700&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root{
+    --cream:#FAF7F0; --cream-deep:#F1EBDD; --paper:#FFFFFF;
+    --ink:#211D14; --ink-soft:#4A4436; --ink-muted:#6B6455; --ink-faint:#A39C89;
+    --hairline:#E4DCC8; --hairline-strong:#D2C7AC;
+    --accent:#2F4F46; --accent-ink:#1E332E; --accent-soft:#E3EAE7;
+    --gold:#9C7A2E; --gold-ink:#7A5A1C; --gold-soft:#F1E9D3;
+    --green:#3F7D52; --green-soft:#E6EFE3;
+    --amber:#B8862E; --amber-soft:#F5EEDC;
+    --rust:#B23B2E; --rust-soft:#F6E7E2;
+    --shadow-1: 0 1px 3px rgba(33,29,20,0.07);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--cream);font-family:'Public Sans',sans-serif;color:var(--ink);-webkit-font-smoothing:antialiased;}
+  h1,h2{font-family:'Source Serif 4',serif;margin:0;font-weight:600;letter-spacing:-0.01em;}
+  a{color:var(--accent);text-decoration:none;}
+  button{font-family:inherit;cursor:pointer;}
+  ::-webkit-scrollbar{width:10px;height:10px;}
+  ::-webkit-scrollbar-thumb{background:var(--hairline-strong);border-radius:6px;}
+  .nav-item{display:flex;align-items:center;gap:11px;height:40px;padding:0 20px;font-size:13.5px;font-weight:600;color:var(--ink-muted);transition:background 140ms ease,color 140ms ease;}
+  .nav-item:hover{background:rgba(33,29,20,0.035);color:var(--ink);}
+  .nav-item.active{background:var(--accent-soft);color:var(--accent-ink);}
+  .btn-primary{background:var(--accent);color:var(--cream);border:1px solid var(--accent);border-radius:4px;padding:0 20px;height:40px;font-size:13.5px;font-weight:600;display:inline-flex;align-items:center;gap:8px;transition:background 160ms ease;}
+  .btn-primary:hover{background:var(--accent-ink);}
+  .btn-ghost-sm{background:transparent;color:var(--ink-soft);border:1px solid var(--hairline-strong);border-radius:4px;padding:0 16px;height:40px;font-size:13.5px;font-weight:600;display:inline-flex;align-items:center;gap:6px;transition:background 160ms ease;}
+  .btn-ghost-sm:hover{background:var(--cream-deep);}
+  .btn-icon{width:30px;height:30px;border-radius:4px;border:1px solid transparent;background:transparent;display:inline-flex;align-items:center;justify-content:center;color:var(--ink-muted);transition:background 140ms ease,color 140ms ease;}
+  .btn-icon:hover{background:var(--cream-deep);border-color:var(--hairline);color:var(--ink);}
+  input:focus,button:focus,a:focus{outline:2px solid var(--accent);outline-offset:2px;}
+  .tab{height:47px;display:flex;align-items:center;font-size:13.5px;font-weight:600;color:var(--ink-muted);border-bottom:2px solid transparent;padding:0 2px;}
+  .tab.active{color:var(--ink);border-bottom-color:var(--accent);}
+  .stat-chip{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;color:var(--ink-soft);font-family:'IBM Plex Mono',monospace;}
+  .status-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+  .bucket-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--ink-muted);white-space:nowrap;}
+  .row{display:grid;grid-template-columns:28px 1fr 76px 150px 76px;align-items:center;gap:16px;height:58px;padding:0 18px;border-top:1px solid var(--hairline);transition:background 140ms ease;}
+  .row:first-child{border-top:none;}
+  .row:hover{background:rgba(33,29,20,0.02);}
+  input[type=checkbox]{width:17px;height:17px;accent-color:var(--accent);cursor:pointer;}
+  .cert-thumb{width:60px;height:42px;border:1px solid var(--hairline-strong);border-radius:2px;background:var(--paper);position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;flex-shrink:0;}
+  .cert-thumb::before{content:'';position:absolute;inset:3px;border:1px solid var(--gold-soft);border-radius:1px;}
+  .cert-thumb .ln{background:var(--ink-faint);height:1.5px;border-radius:1px;}
+  .cert-thumb .seal{position:absolute;top:4px;right:4px;width:4px;height:4px;border-radius:50%;background:var(--gold);}
+  .collapsed-row{display:flex;align-items:center;gap:10px;height:48px;padding:0 18px;background:var(--cream-deep);border-radius:6px;cursor:pointer;}
+</style>
+</head>
+<body>
+
+<div style="width: 1440px; height: 900px; background: var(--cream); display: flex;">
+
+  <!-- Sidebar -->
+  <div style="width: 232px; flex-shrink: 0; background: var(--cream-deep); border-right: 1px solid var(--hairline); display: flex; flex-direction: column;">
+    <div style="height: 64px; display: flex; align-items: center; gap: 10px; padding: 0 22px; border-bottom: 1px solid var(--hairline);">
+      <div style="width: 24px; height: 24px; border-radius: 6px; background: var(--accent); display: flex; align-items: center; justify-content: center;">
+        <span style="font-family:'Source Serif 4',serif; color: var(--cream); font-size: 12px; font-weight: 700;">S</span>
+      </div>
+      <span style="font-family:'Source Serif 4',serif; font-size: 15px; font-weight: 600;">Seal</span>
+    </div>
+
+    <div style="padding: 14px 0; display: flex; flex-direction: column; gap: 2px;">
+      <div class="nav-item active">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/></svg>
+        Dashboard
+      </div>
+      <div class="nav-item">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+        New Certificate
+      </div>
+      <div class="nav-item">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3h9l5 5v13a1 1 0 01-1 1H6a1 1 0 01-1-1V4a1 1 0 011-1z"/><path d="M14 3v5h5"/></svg>
+        Templates
+      </div>
+      <div class="nav-item">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 2"/></svg>
+        Settings
+      </div>
+    </div>
+
+    <div style="margin-top: auto; height: 60px; border-top: 1px solid var(--hairline); display: flex; align-items: center; gap: 10px; padding: 0 20px;">
+      <div style="width: 26px; height: 26px; border-radius: 50%; background: linear-gradient(135deg, #9C7A2E 50%, #F1E9D3 50%); flex-shrink: 0;"></div>
+      <span style="font-size: 13px; font-weight: 600; flex-grow: 1;">Ms. Alvarez</span>
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
+    </div>
+  </div>
+
+  <!-- Content -->
+  <div style="flex-grow: 1; display: flex; flex-direction: column; min-width: 0;">
+
+    <!-- Top bar -->
+    <div style="height: 64px; flex-shrink: 0; border-bottom: 1px solid var(--hairline); display: flex; align-items: center; justify-content: space-between; padding: 0 32px;">
+      <button class="btn-ghost-sm" style="border: none; padding: 0; height: auto; gap: 8px;">
+        <h1 style="font-size: 19px;">Spring Honor Roll</h1>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <button class="btn-icon" aria-label="Search">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+        </button>
+        <button class="btn-icon" aria-label="Notifications">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 01-3.4 0"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div style="height: 48px; flex-shrink: 0; border-bottom: 1px solid var(--hairline); display: flex; align-items: center; justify-content: space-between; padding: 0 32px;">
+      <div style="display: flex; gap: 28px;">
+        <div class="tab active">Review List</div>
+        <div class="tab">Chat Commands</div>
+      </div>
+      <div style="display: flex; gap: 20px;">
+        <span class="stat-chip"><span class="status-dot" style="background: var(--amber);"></span>38 pending</span>
+        <span class="stat-chip"><span class="status-dot" style="background: var(--rust);"></span>5 not qualified</span>
+        <span class="stat-chip"><span class="status-dot" style="background: var(--green);"></span>2 sent</span>
+      </div>
+    </div>
+
+    <!-- List -->
+    <div style="flex-grow: 1; overflow-y: auto; padding: 22px 32px 12px;">
+
+      <div style="display: flex; align-items: baseline; gap: 12px; margin-bottom: 10px;">
+        <span class="bucket-label">Just Arrived</span>
+        <span style="font-size: 12px; color: var(--ink-muted);">3</span>
+        <div style="flex-grow: 1; height: 1px; background: var(--hairline);"></div>
+      </div>
+      <div style="border: 1px solid var(--hairline); border-radius: 6px; background: var(--paper); margin-bottom: 26px;">
+
+        <div class="row">
+          <input type="checkbox" aria-label="Select Maria Chen">
+          <div style="display: flex; align-items: center; gap: 10px; min-width: 0;">
+            <span class="status-dot" style="background: var(--amber);"></span>
+            <div style="min-width: 0;">
+              <div style="font-size: 13.5px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Maria Chen</div>
+              <div style="font-size: 12px; color: var(--ink-muted);">maria.chen@lincolnhs.edu</div>
+            </div>
+          </div>
+          <div class="cert-thumb"><span class="seal"></span><div class="ln" style="width: 30px;"></div><div class="ln" style="width: 18px; opacity: 0.6;"></div></div>
+          <div style="font-size: 13px; color: var(--ink-soft);">Completed</div>
+          <div style="display: flex; gap: 4px; justify-self: end;">
+            <button class="btn-icon" aria-label="Edit"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg></button>
+            <button class="btn-icon" aria-label="Delete"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 011-1h6a1 1 0 011 1v2m2 0-1 14a1 1 0 01-1 1H7a1 1 0 01-1-1L5 6"/></svg></button>
+          </div>
+        </div>
+
+        <div class="row">
+          <input type="checkbox" checked aria-label="Select Devon Brooks">
+          <div style="display: flex; align-items: center; gap: 10px; min-width: 0;">
+            <span class="status-dot" style="background: var(--amber);"></span>
+            <div style="min-width: 0;">
+              <div style="font-size: 13.5px; font-weight: 600;">Devon Brooks</div>
+              <div style="font-size: 12px; color: var(--ink-muted);">devon.brooks@lincolnhs.edu</div>
+            </div>
+          </div>
+          <div class="cert-thumb"><span class="seal"></span><div class="ln" style="width: 28px;"></div><div class="ln" style="width: 20px; opacity: 0.6;"></div></div>
+          <div style="font-size: 13px; color: var(--ink-soft);">Yes</div>
+          <div style="display: flex; gap: 4px; justify-self: end;">
+            <button class="btn-icon" aria-label="Edit"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg></button>
+            <button class="btn-icon" aria-label="Delete"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 011-1h6a1 1 0 011 1v2m2 0-1 14a1 1 0 01-1 1H7a1 1 0 01-1-1L5 6"/></svg></button>
+          </div>
+        </div>
+
+        <div class="row">
+          <input type="checkbox" aria-label="Select Priya Patel">
+          <div style="display: flex; align-items: center; gap: 10px; min-width: 0;">
+            <span class="status-dot" style="background: var(--rust);"></span>
+            <div style="min-width: 0;">
+              <div style="font-size: 13.5px; font-weight: 600;">Priya Patel</div>
+              <div style="font-size: 12px; color: var(--ink-muted);">priya.patel@lincolnhs.edu</div>
+            </div>
+          </div>
+          <div class="cert-thumb" style="opacity: 0.5;"><div class="ln" style="width: 30px;"></div><div class="ln" style="width: 16px; opacity: 0.6;"></div></div>
+          <div style="font-size: 13px; color: var(--rust); font-weight: 600;">No</div>
+          <div style="display: flex; gap: 4px; justify-self: end;">
+            <button class="btn-icon" aria-label="Edit"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg></button>
+            <button class="btn-icon" aria-label="Delete"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 011-1h6a1 1 0 011 1v2m2 0-1 14a1 1 0 01-1 1H7a1 1 0 01-1-1L5 6"/></svg></button>
+          </div>
+        </div>
+      </div>
+
+      <div style="display: flex; align-items: baseline; gap: 12px; margin-bottom: 10px;">
+        <span class="bucket-label">Last 6 Hours</span>
+        <span style="font-size: 12px; color: var(--ink-muted);">2</span>
+        <div style="flex-grow: 1; height: 1px; background: var(--hairline);"></div>
+      </div>
+      <div style="border: 1px solid var(--hairline); border-radius: 6px; background: var(--paper); margin-bottom: 26px;">
+
+        <div class="row">
+          <input type="checkbox" checked aria-label="Select Amir Hassan">
+          <div style="display: flex; align-items: center; gap: 10px; min-width: 0;">
+            <span class="status-dot" style="background: var(--amber);"></span>
+            <div style="min-width: 0;">
+              <div style="font-size: 13.5px; font-weight: 600;">Amir Hassan</div>
+              <div style="font-size: 12px; color: var(--ink-muted);">amir.hassan@lincolnhs.edu</div>
+            </div>
+          </div>
+          <div class="cert-thumb"><span class="seal"></span><div class="ln" style="width: 30px;"></div><div class="ln" style="width: 18px; opacity: 0.6;"></div></div>
+          <div style="font-size: 13px; color: var(--ink-soft);">Done</div>
+          <div style="display: flex; gap: 4px; justify-self: end;">
+            <button class="btn-icon" aria-label="Edit"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg></button>
+            <button class="btn-icon" aria-label="Delete"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 011-1h6a1 1 0 011 1v2m2 0-1 14a1 1 0 01-1 1H7a1 1 0 01-1-1L5 6"/></svg></button>
+          </div>
+        </div>
+
+        <div class="row">
+          <input type="checkbox" checked aria-label="Select Lucia Fernandez">
+          <div style="display: flex; align-items: center; gap: 10px; min-width: 0;">
+            <span class="status-dot" style="background: var(--green);"></span>
+            <div style="min-width: 0;">
+              <div style="font-size: 13.5px; font-weight: 600;">Lucia Fernandez</div>
+              <div style="font-size: 12px; color: var(--ink-muted);">lucia.fernandez@lincolnhs.edu &middot; sent 09:41</div>
+            </div>
+          </div>
+          <div class="cert-thumb"><span class="seal"></span><div class="ln" style="width: 32px;"></div><div class="ln" style="width: 20px; opacity: 0.6;"></div></div>
+          <div style="font-size: 13px; color: var(--ink-soft);">Completed</div>
+          <div style="display: flex; gap: 4px; justify-self: end;">
+            <button class="btn-icon" aria-label="Edit"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg></button>
+            <button class="btn-icon" aria-label="Delete"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 011-1h6a1 1 0 011 1v2m2 0-1 14a1 1 0 01-1 1H7a1 1 0 01-1-1L5 6"/></svg></button>
+          </div>
+        </div>
+      </div>
+
+      <div class="collapsed-row" style="margin-bottom: 10px;">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>
+        <span class="bucket-label">Yesterday</span>
+        <span style="font-size: 12px; color: var(--ink-muted);">12</span>
+      </div>
+      <div class="collapsed-row">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>
+        <span class="bucket-label">Last Week</span>
+        <span style="font-size: 12px; color: var(--ink-muted);">21</span>
+      </div>
+
+    </div>
+
+    <!-- Sticky footer -->
+    <div style="height: 64px; flex-shrink: 0; border-top: 1px solid var(--hairline); background: var(--paper); display: flex; align-items: center; justify-content: space-between; padding: 0 32px;">
+      <span style="font-size: 13px; color: var(--ink-muted);">3 selected &middot; 45 total</span>
+      <div style="display: flex; gap: 10px;">
+        <button class="btn-ghost-sm">Export</button>
+        <button class="btn-primary">Approve All</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

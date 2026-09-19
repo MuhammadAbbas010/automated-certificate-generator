@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Review Dashboard — Mobile</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@500;600;700&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root{
+    --cream:#FAF7F0; --cream-deep:#F1EBDD; --paper:#FFFFFF;
+    --ink:#211D14; --ink-soft:#4A4436; --ink-muted:#6B6455; --ink-faint:#A39C89;
+    --hairline:#E4DCC8; --hairline-strong:#D2C7AC;
+    --accent:#2F4F46; --accent-ink:#1E332E; --accent-soft:#E3EAE7;
+    --gold:#9C7A2E; --gold-ink:#7A5A1C; --gold-soft:#F1E9D3;
+    --green:#3F7D52; --green-soft:#E6EFE3;
+    --amber:#B8862E; --amber-soft:#F5EEDC;
+    --rust:#B23B2E; --rust-soft:#F6E7E2;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--cream);font-family:'Public Sans',sans-serif;color:var(--ink);-webkit-font-smoothing:antialiased;}
+  h1,h2{font-family:'Source Serif 4',serif;margin:0;font-weight:600;letter-spacing:-0.01em;}
+  .mono{font-family:'IBM Plex Mono',monospace;}
+  button{font-family:inherit;cursor:pointer;}
+  input:focus,button:focus,a:focus{outline:2px solid var(--accent);outline-offset:2px;}
+  ::-webkit-scrollbar{display:none;}
+  .btn-primary{background:var(--accent);color:var(--cream);border:1px solid var(--accent);border-radius:4px;padding:0 18px;height:46px;font-size:14px;font-weight:600;display:inline-flex;align-items:center;justify-content:center;gap:8px;}
+  .btn-ghost-sm{background:transparent;color:var(--ink-soft);border:1px solid var(--hairline-strong);border-radius:4px;padding:0 16px;height:46px;font-size:13.5px;font-weight:600;display:inline-flex;align-items:center;justify-content:center;gap:6px;}
+  .btn-icon{width:36px;height:36px;border-radius:4px;border:1px solid transparent;background:transparent;display:inline-flex;align-items:center;justify-content:center;color:var(--ink-muted);}
+  .tab{height:42px;display:flex;align-items:center;font-size:13.5px;font-weight:600;color:var(--ink-muted);border-bottom:2px solid transparent;padding:0 2px;}
+  .tab.active{color:var(--ink);border-bottom-color:var(--accent);}
+  .stat-chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--ink-soft);font-family:'IBM Plex Mono',monospace;white-space:nowrap;border:1px solid var(--hairline);border-radius:4px;padding:5px 9px;flex-shrink:0;}
+  .status-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+  .bucket-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--ink-muted);white-space:nowrap;}
+  input[type=checkbox]{width:17px;height:17px;accent-color:var(--accent);cursor:pointer;flex-shrink:0;}
+  .cert-thumb{width:40px;height:28px;border:1px solid var(--hairline-strong);border-radius:2px;background:var(--paper);position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;flex-shrink:0;}
+  .cert-thumb::before{content:'';position:absolute;inset:2px;border:1px solid var(--gold-soft);border-radius:1px;}
+  .cert-thumb .ln{background:var(--ink-faint);height:1.2px;border-radius:1px;}
+  .cert-thumb .seal{position:absolute;top:3px;right:3px;width:3px;height:3px;border-radius:50%;background:var(--gold);}
+  .row-card{padding:12px 4px;display:flex;flex-direction:column;gap:9px;border-top:1px solid var(--hairline);}
+  .row-card:first-child{border-top:none;}
+  .collapsed-row{display:flex;align-items:center;gap:9px;height:46px;padding:0 14px;background:var(--cream-deep);border-radius:6px;}
+</style>
+</head>
+<body>
+
+<div style="width: 390px; height: 844px; background: var(--cream); display: flex; flex-direction: column; overflow: hidden;">
+
+  <!-- Top bar -->
+  <div style="height: 56px; flex-shrink: 0; border-bottom: 1px solid var(--hairline); display: flex; align-items: center; justify-content: space-between; padding: 0 14px;">
+    <button class="btn-icon" aria-label="Open menu">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+    </button>
+    <button class="btn-ghost-sm" style="border: none; padding: 0; height: auto; gap: 6px; flex-grow: 1; justify-content: center; min-width: 0;">
+      <h1 style="font-size: 16px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Spring Honor Roll</h1>
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" style="flex-shrink: 0;"><path d="M6 9l6 6 6-6"/></svg>
+    </button>
+    <button class="btn-icon" aria-label="Notifications">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 01-3.4 0"/></svg>
+    </button>
+  </div>
+
+  <!-- Tabs -->
+  <div style="height: 44px; flex-shrink: 0; border-bottom: 1px solid var(--hairline); display: flex; align-items: center; gap: 22px; padding: 0 14px;">
+    <div class="tab active">Review List</div>
+    <div class="tab">Chat Commands</div>
+  </div>
+
+  <!-- Stats -->
+  <div style="flex-shrink: 0; display: flex; gap: 8px; padding: 10px 14px; overflow-x: auto;">
+    <span class="stat-chip"><span class="status-dot" style="background: var(--amber);"></span>38 pending</span>
+    <span class="stat-chip"><span class="status-dot" style="background: var(--rust);"></span>5 not qualified</span>
+    <span class="stat-chip"><span class="status-dot" style="background: var(--green);"></span>2 sent</span>
+  </div>
+
+  <!-- List -->
+  <div style="flex-grow: 1; overflow-y: auto; padding: 4px 14px 12px;">
+
+    <div style="display: flex; align-items: baseline; gap: 10px; margin: 10px 0 8px;">
+      <span class="bucket-label">Just Arrived</span>
+      <span style="font-size: 12px; color: var(--ink-muted);">3</span>
+      <div style="flex-grow: 1; height: 1px; background: var(--hairline);"></div>
+    </div>
+    <div style="border: 1px solid var(--hairline); border-radius: 6px; background: var(--paper); padding: 0 12px; margin-bottom: 22px;">
+
+      <div class="row-card">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <input type="checkbox" aria-label="Select Maria Chen">
+          <span class="status-dot" style="background: var(--amber);"></span>
+          <span style="font-size: 13.5px; font-weight: 600; flex-grow: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Maria Chen</span>
+          <button class="btn-icon" style="width: 28px; height: 28px;" aria-label="More actions">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"><circle cx="12" cy="5" r="0.5"/><circle cx="12" cy="12" r="0.5"/><circle cx="12" cy="19" r="0.5"/><path d="M12 5v0M12 12v0M12 19v0"/></svg>
+          </button>
+        </div>
+        <div style="display: flex; align-items: center; justify-content: space-between; padding-left: 27px;">
+          <div style="min-width: 0;">
+            <div style="font-size: 12px; color: var(--ink-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">maria.chen@lincolnhs.edu</div>
+            <div style="font-size: 12px; color: var(--ink-soft); margin-top: 2px;">Completed</div>
+          </div>
+          <div class="cert-thumb"><span class="seal"></span><div class="ln" style="width: 20px;"></div><div class="ln" style="width: 12px; opacity: 0.6;"></div></div>
+        </div>
+      </div>
+
+      <div class="row-card">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <input type="checkbox" checked aria-label="Select Devon Brooks">
+          <span class="status-dot" style="background: var(--amber);"></span>
+          <span style="font-size: 13.5px; font-weight: 600; flex-grow: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Devon Brooks</span>
+          <button class="btn-icon" style="width: 28px; height: 28px;" aria-label="More actions">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"><circle cx="12" cy="5" r="0.5"/><circle cx="12" cy="12" r="0.5"/><circle cx="12" cy="19" r="0.5"/><path d="M12 5v0M12 12v0M12 19v0"/></svg>
+          </button>
+        </div>
+        <div style="display: flex; align-items: center; justify-content: space-between; padding-left: 27px;">
+          <div style="min-width: 0;">
+            <div style="font-size: 12px; color: var(--ink-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">devon.brooks@lincolnhs.edu</div>
+            <div style="font-size: 12px; color: var(--ink-soft); margin-top: 2px;">Yes</div>
+          </div>
+          <div class="cert-thumb"><span class="seal"></span><div class="ln" style="width: 18px;"></div><div class="ln" style="width: 13px; opacity: 0.6;"></div></div>
+        </div>
+      </div>
+
+      <div class="row-card">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <input type="checkbox" aria-label="Select Priya Patel">
+          <span class="status-dot" style="background: var(--rust);"></span>
+          <span style="font-size: 13.5px; font-weight: 600; flex-grow: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Priya Patel</span>
+          <button class="btn-icon" style="width: 28px; height: 28px;" aria-label="More actions">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"><circle cx="12" cy="5" r="0.5"/><circle cx="12" cy="12" r="0.5"/><circle cx="12" cy="19" r="0.5"/><path d="M12 5v0M12 12v0M12 19v0"/></svg>
+          </button>
+        </div>
+        <div style="display: flex; align-items: center; justify-content: space-between; padding-left: 27px;">
+          <div style="min-width: 0;">
+            <div style="font-size: 12px; color: var(--ink-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">priya.patel@lincolnhs.edu</div>
+            <div style="font-size: 12px; color: var(--rust); font-weight: 600; margin-top: 2px;">No</div>
+          </div>
+          <div class="cert-thumb" style="opacity: 0.5;"><div class="ln" style="width: 20px;"></div><div class="ln" style="width: 11px; opacity: 0.6;"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display: flex; align-items: baseline; gap: 10px; margin: 10px 0 8px;">
+      <span class="bucket-label">Last 6 Hours</span>
+      <span style="font-size: 12px; color: var(--ink-muted);">2</span>
+      <div style="flex-grow: 1; height: 1px; background: var(--hairline);"></div>
+    </div>
+    <div style="border: 1px solid var(--hairline); border-radius: 6px; background: var(--paper); padding: 0 12px; margin-bottom: 22px;">
+      <div class="row-card">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <input type="checkbox" checked aria-label="Select Amir Hassan">
+          <span class="status-dot" style="background: var(--amber);"></span>
+          <span style="font-size: 13.5px; font-weight: 600; flex-grow: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Amir Hassan</span>
+          <button class="btn-icon" style="width: 28px; height: 28px;" aria-label="More actions">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"><circle cx="12" cy="5" r="0.5"/><circle cx="12" cy="12" r="0.5"/><circle cx="12" cy="19" r="0.5"/><path d="M12 5v0M12 12v0M12 19v0"/></svg>
+          </button>
+        </div>
+        <div style="display: flex; align-items: center; justify-content: space-between; padding-left: 27px;">
+          <div style="min-width: 0;">
+            <div style="font-size: 12px; color: var(--ink-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">amir.hassan@lincolnhs.edu</div>
+            <div style="font-size: 12px; color: var(--ink-soft); margin-top: 2px;">Done</div>
+          </div>
+          <div class="cert-thumb"><span class="seal"></span><div class="ln" style="width: 20px;"></div><div class="ln" style="width: 12px; opacity: 0.6;"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="collapsed-row" style="margin-bottom: 10px;">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>
+      <span class="bucket-label">Yesterday</span>
+      <span style="font-size: 12px; color: var(--ink-muted);">12</span>
+    </div>
+    <div class="collapsed-row">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>
+      <span class="bucket-label">Last Week</span>
+      <span style="font-size: 12px; color: var(--ink-muted);">21</span>
+    </div>
+  </div>
+
+  <!-- Sticky footer -->
+  <div style="flex-shrink: 0; border-top: 1px solid var(--hairline); background: var(--paper); padding: 10px 14px 16px;">
+    <div style="font-size: 12px; color: var(--ink-muted); margin-bottom: 8px;">3 selected &middot; 45 total</div>
+    <div style="display: flex; gap: 8px;">
+      <button class="btn-ghost-sm" style="flex-shrink: 0;" aria-label="Export">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M4 21h16"/></svg>
+      </button>
+      <button class="btn-primary" style="flex-grow: 1;">Approve All</button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
